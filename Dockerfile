@@ -10,20 +10,30 @@ COPY ssh_host_keys/ssh_host_ed25519_key /etc/ssh/ssh_host_ed25519_key
 # Set correct permissions for the keys
 RUN chmod 600 /etc/ssh/ssh_host_*_key
 
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
 # Install additional system dependencies
 RUN apt-get update && apt-get install -y \
-    wget \
-    unzip \
-    sudo \
     build-essential \
+    clang \
+    clangd \
     cmake \
     git \
     git-lfs \
+    locales \
     ninja-build \
-    clangd \
-    clang \
     openssh-server \
+    python3-venv \
+    stow \
+    sudo \
+    unzip \
+    wget \
     && rm -rf /var/lib/apt/lists/*
+
+RUN locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8
 
 # Download and extract LibTorch
 RUN wget -q https://download.pytorch.org/libtorch/cu124/libtorch-cxx11-abi-shared-with-deps-2.4.1%2Bcu124.zip -O libtorch.zip && \
@@ -61,6 +71,10 @@ RUN chown -R $USERNAME:$USERNAME /home/$USERNAME/.ssh \
     && chmod 600 /home/$USERNAME/.ssh/authorized_keys
 
 USER $USERNAME
+
+# Set up dot files
+RUN git clone https://github.com/play-hearts/dotfiles.git ~/.dotfiles
+RUN ~/.dotfiles/stow_all.sh
 
 USER root
 
