@@ -17,14 +17,15 @@ ENV LC_ALL en_US.UTF-8
 # Install additional system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
-    clang \
-    clangd \
     cmake \
     git \
     git-lfs \
+    gnupg \
     locales \
+    lsb-release \
     ninja-build \
     openssh-server \
+    software-properties-common \
     stow \
     sudo \
     unzip \
@@ -70,10 +71,20 @@ RUN git clone https://github.com/play-hearts/dotfiles.git ~/dotfiles && \
     ./stow_all.sh
 USER root
 
+# Download and extract llvm-18
+ARG LLVM_VERSION=18
+RUN wget https://apt.llvm.org/llvm.sh && \
+    chmod +x llvm.sh && \
+    ./llvm.sh ${LLVM_VERSION} all && \
+    echo 'export PATH=/usr/lib/llvm-18/bin:$PATH' >> /etc/bash.bashrc
+
 # Download and extract LibTorch
-RUN wget -q https://download.pytorch.org/libtorch/cu124/libtorch-cxx11-abi-shared-with-deps-2.4.1%2Bcu124.zip -O libtorch.zip && \
-    unzip libtorch.zip -d /usr/local && \
-    rm libtorch.zip
+ARG TORCH_LOCATION=/usr/local/libtorch
+ARG TORCH_ARCHIVE_URL=https://download.pytorch.org/libtorch/cu124/libtorch-cxx11-abi-shared-with-deps-2.4.1%2Bcu124.zip
+RUN mkdir -p ${TORCH_LOCATION} && \
+    wget -q -O tmp.zip ${TORCH_ARCHIVE_URL} && \
+    unzip -q tmp.zip -d ${TORCH_LOCATION}/.. && \
+    rm tmp.zip
 
 # Set environment variables
 ENV LIBTORCH=/usr/local/libtorch
