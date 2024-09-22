@@ -1,5 +1,5 @@
 # Use the NVIDIA TensorRT container as the base image
-FROM nvcr.io/nvidia/tensorrt:24.08-py3
+FROM nvcr.io/nvidia/pytorch:24.08-py3
 
 # Copy SSH host keys
 COPY ssh_host_keys/ssh_host_rsa_key /etc/ssh/ssh_host_rsa_key
@@ -25,7 +25,6 @@ RUN apt-get update && apt-get install -y \
     locales \
     ninja-build \
     openssh-server \
-    python3-venv \
     stow \
     sudo \
     unzip \
@@ -34,15 +33,6 @@ RUN apt-get update && apt-get install -y \
 
 RUN locale-gen en_US.UTF-8 && \
     update-locale LANG=en_US.UTF-8
-
-# Download and extract LibTorch
-RUN wget -q https://download.pytorch.org/libtorch/cu124/libtorch-cxx11-abi-shared-with-deps-2.4.1%2Bcu124.zip -O libtorch.zip && \
-    unzip libtorch.zip -d /usr/local && \
-    rm libtorch.zip
-
-# Set environment variables
-ENV LIBTORCH=/usr/local/libtorch
-ENV LD_LIBRARY_PATH=${LIBTORCH}/lib:$LD_LIBRARY_PATH
 
 # Set up SSH
 RUN mkdir /var/run/sshd
@@ -73,10 +63,21 @@ RUN chown -R $USERNAME:$USERNAME /home/$USERNAME/.ssh \
 USER $USERNAME
 
 # Set up dot files
-RUN git clone https://github.com/play-hearts/dotfiles.git ~/.dotfiles
-RUN ~/.dotfiles/stow_all.sh
-
+# Set up dot files
+RUN git clone https://github.com/play-hearts/dotfiles.git ~/dotfiles && \
+    cd ~/dotfiles && \
+    git pull && \
+    ./stow_all.sh
 USER root
+
+# Download and extract LibTorch
+RUN wget -q https://download.pytorch.org/libtorch/cu124/libtorch-cxx11-abi-shared-with-deps-2.4.1%2Bcu124.zip -O libtorch.zip && \
+    unzip libtorch.zip -d /usr/local && \
+    rm libtorch.zip
+
+# Set environment variables
+ENV LIBTORCH=/usr/local/libtorch
+ENV LD_LIBRARY_PATH=${LIBTORCH}/lib:$LD_LIBRARY_PATH
 
 # Expose SSH port
 EXPOSE 22
