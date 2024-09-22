@@ -7,7 +7,7 @@ USERNAME := $(shell whoami)
 USER_UID := $(shell id -u)
 USER_GID := $(shell id -g)
 
-.PHONY: build run stop remove ssh clean status generate_ssh_keys
+.PHONY: build run stop rebuild remove ssh clean status generate_ssh_keys
 
 generate_ssh_keys:
 	@if [ ! -f ssh_host_keys/ssh_host_rsa_key ]; then \
@@ -36,6 +36,9 @@ stop:
 
 remove: stop
 	-docker rm ${NAME}
+
+rebuild: remove
+	$(MAKE) build
 
 ssh:
 	ssh -p 2222 $(USERNAME)@localhost
