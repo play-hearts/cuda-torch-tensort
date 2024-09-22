@@ -25,7 +25,11 @@ build: generate_ssh_keys
 		--build-arg USER_GID=$(USER_GID) .
 
 run:
-	docker run --detach --gpus all -p 2222:22 -v ${HUB_DIR}:${HUB_DIR} --name ${NAME} $(IMAGE)
+	docker run --detach --gpus all \
+		-p 2222:22 \
+		-v ${HUB_DIR}:${HUB_DIR} \
+		-v /mnt/lvol0:/mnt/lvol0 \
+		--name ${NAME} $(IMAGE)
 
 stop:
 	-docker stop -t 30 ${NAME}
